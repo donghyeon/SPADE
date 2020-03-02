@@ -53,7 +53,8 @@ for epoch in iter_counter.training_epochs():
             visuals = OrderedDict([('input_label', data_i['label']),
                                    ('synthesized_image', trainer.get_latest_generated()),
                                    ('real_image', data_i['image'])])
-            visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far)
+            visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far,
+                                               iter_counter.epoch_iter)
 
         if iter_counter.needs_saving():
             print('saving the latest model (epoch %d, total_steps %d)' %

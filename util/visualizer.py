@@ -39,7 +39,7 @@ class Visualizer():
                 log_file.write('================ Training Loss (%s) ================\n' % now)
 
     # |visuals|: dictionary of images to display or save
-    def display_current_results(self, visuals, epoch, step):
+    def display_current_results(self, visuals, epoch, step, iter):
 
         ## convert tensors to numpy arrays
         visuals = self.convert_visuals_to_numpy(visuals)
@@ -68,10 +68,10 @@ class Visualizer():
             for label, image_numpy in visuals.items():
                 if isinstance(image_numpy, list):
                     for i in range(len(image_numpy)):
-                        img_path = os.path.join(self.img_dir, 'epoch%.3d_iter%.3d_%s_%d.png' % (epoch, step, label, i))
+                        img_path = os.path.join(self.img_dir, 'epoch%.3d_iter%.3d_%s_%d.png' % (epoch, iter, label, i))
                         util.save_image(image_numpy[i], img_path)
                 else:
-                    img_path = os.path.join(self.img_dir, 'epoch%.3d_iter%.3d_%s.png' % (epoch, step, label))
+                    img_path = os.path.join(self.img_dir, 'epoch%.3d_iter%.3d_%s.png' % (epoch, iter, label))
                     if len(image_numpy.shape) >= 4:
                         image_numpy = image_numpy[0]                    
                     util.save_image(image_numpy, img_path)
@@ -87,12 +87,12 @@ class Visualizer():
                 for label, image_numpy in visuals.items():
                     if isinstance(image_numpy, list):
                         for i in range(len(image_numpy)):
-                            img_path = 'epoch%.3d_iter%.3d_%s_%d.png' % (n, step, label, i)
+                            img_path = 'epoch%.3d_iter%.3d_%s_%d.png' % (n, iter, label, i)
                             ims.append(img_path)
                             txts.append(label+str(i))
                             links.append(img_path)
                     else:
-                        img_path = 'epoch%.3d_iter%.3d_%s.png' % (n, step, label)
+                        img_path = 'epoch%.3d_iter%.3d_%s.png' % (n, iter, label)
                         ims.append(img_path)
                         txts.append(label)
                         links.append(img_path)
