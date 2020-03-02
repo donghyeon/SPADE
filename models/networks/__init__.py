@@ -11,6 +11,9 @@ from models.networks.generator import *
 from models.networks.encoder import *
 import util.util as util
 
+from models.networks.oa_loss import *
+from models.networks.se_generator import *
+
 
 def find_network_using_name(target_network_name, filename):
     target_class_name = target_network_name + filename
