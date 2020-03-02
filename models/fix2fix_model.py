@@ -10,6 +10,8 @@ class Fix2FixModel(Pix2PixModel):
         self.opt = opt
         self.FloatTensor = torch.cuda.FloatTensor if self.use_gpu() \
             else torch.FloatTensor
+        if opt.fp16:
+            self.FloatTensor = torch.cuda.HalfTensor
         self.ByteTensor = torch.cuda.ByteTensor if self.use_gpu() \
             else torch.ByteTensor
 
