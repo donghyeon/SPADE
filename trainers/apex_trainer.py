@@ -1,15 +1,15 @@
-from models.fix2fix_model import Fix2FixModel
+import models
 from trainers.pix2pix_trainer import Pix2PixTrainer
 import torch
 from apex import amp
 from apex.parallel import DistributedDataParallel
 
 
-class Fix2FixTrainer(Pix2PixTrainer):
+class ApexTrainer(Pix2PixTrainer):
     def __init__(self, opt):
         self.opt = opt
 
-        self.pix2pix_model = Fix2FixModel(opt)
+        self.pix2pix_model = models.create_model(opt)
 
         if opt.isTrain:
             self.optimizer_G, self.optimizer_D = self.pix2pix_model.create_optimizers(opt)
@@ -20,7 +20,7 @@ class Fix2FixTrainer(Pix2PixTrainer):
                 self.pix2pix_model, [self.optimizer_G, self.optimizer_D], num_losses=2)
         self.generated = None
 
-        if len(opt.gpu_ids) > 1:
+        if opt.distributed:
             self.pix2pix_model = DistributedDataParallel(self.pix2pix_model, delay_allreduce=True)
 
     def run_generator_one_step(self, data):
