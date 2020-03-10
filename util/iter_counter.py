@@ -10,9 +10,9 @@ import numpy as np
 
 # Helper class that keeps track of training iterations
 class IterationCounter():
-    def __init__(self, opt, dataset_size):
+    def __init__(self, opt, dataloader_size):
         self.opt = opt
-        self.dataset_size = dataset_size
+        self.dataset_size = dataloader_size * opt.batchSize
 
         self.first_epoch = 1
         self.total_epochs = opt.niter + opt.niter_decay
@@ -27,7 +27,7 @@ class IterationCounter():
                 print('Could not load iteration record at %s. Starting from beginning.' %
                       self.iter_record_path)
 
-        self.total_steps_so_far = (self.first_epoch - 1) * dataset_size + self.epoch_iter
+        self.total_steps_so_far = (self.first_epoch - 1) * self.dataset_size + self.epoch_iter
 
     # return the iterator of epochs for the training
     def training_epochs(self):
@@ -35,7 +35,8 @@ class IterationCounter():
 
     def record_epoch_start(self, epoch):
         self.epoch_start_time = time.time()
-        self.epoch_iter = 0
+        if epoch != self.first_epoch:
+            self.epoch_iter = 0
         self.last_iter_time = time.time()
         self.current_epoch = epoch
 
