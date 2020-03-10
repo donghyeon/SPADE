@@ -11,7 +11,6 @@ from models.networks.generator import *
 from models.networks.encoder import *
 import util.util as util
 
-from models.networks.oa_loss import *
 from models.networks.se_generator import *
 
 

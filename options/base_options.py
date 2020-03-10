@@ -65,8 +65,6 @@ class BaseOptions():
         parser.add_argument('--no_instance', action='store_true', help='if specified, do *not* add instance map as input')
         parser.add_argument('--nef', type=int, default=16, help='# of encoder filters in the first conv layer')
         parser.add_argument('--use_vae', action='store_true', help='enable training with an image encoder.')
-        parser.add_argument('--fp16', action='store_true', help='mixed precision training')
-        parser.add_argument('--local_rank', default=0, type=int)
 
         self.initialized = True
         return parser
@@ -171,10 +169,6 @@ class BaseOptions():
                 opt.gpu_ids.append(id)
         if len(opt.gpu_ids) > 0:
             torch.cuda.set_device(opt.gpu_ids[0])
-
-        if len(opt.gpu_ids) > 1:
-            torch.cuda.set_device(opt.local_rank)
-            torch.distributed.init_process_group(backend="nccl", init_method="env://")
 
         assert len(opt.gpu_ids) == 0 or opt.batchSize % len(opt.gpu_ids) == 0, \
             "Batch size %d is wrong. It must be a multiple of # GPUs %d." \
