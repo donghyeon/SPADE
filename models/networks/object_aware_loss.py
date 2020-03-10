@@ -155,14 +155,15 @@ class ReducedL1Loss(nn.Module):
         return loss
 
 
+# TODO: apply_oa_loss argument seems weird. Refactor this class.
 class GANLoss(nn.Module):
     def __init__(self, gan_mode, target_real_label=1.0, target_fake_label=0.0,
-                 tensor=torch.FloatTensor, opt=None):
+                 tensor=torch.FloatTensor, opt=None, apply_oa_loss=False):
         super().__init__()
         if gan_mode not in ['original', 'ls', 'hinge', 'w']:
             raise ValueError('Unexpected gan_mode {}'.format(gan_mode))
         self.gan_mode = gan_mode
-        self.apply_oa_loss = opt.apply_oa_loss
+        self.apply_oa_loss = apply_oa_loss
         self.unreduced_gan_loss_module = None
         self.reducer_module = None
         self.reduced_gan_loss_module = None
@@ -193,11 +194,12 @@ class GANLoss(nn.Module):
         return loss
 
 
+# TODO: apply_oa_loss argument seems weird. Refactor this class.
 class FeatLoss(nn.Module):
-    def __init__(self, tensor=torch.FloatTensor, opt=None):
+    def __init__(self, tensor=torch.FloatTensor, opt=None, apply_oa_loss=False):
         super().__init__()
         self.tensor = tensor
-        self.apply_oa_loss = opt.apply_oa_loss
+        self.apply_oa_loss = apply_oa_loss
         self.reducer_module = None
         self.reduced_loss_module = None
         self.build()
@@ -222,11 +224,12 @@ class FeatLoss(nn.Module):
         return loss
 
 
+# TODO: apply_oa_loss argument seems weird. Refactor this class.
 class VGGLoss(nn.Module):
-    def __init__(self, opt=None):
+    def __init__(self, opt=None, apply_oa_loss=False):
         super().__init__()
         self.vgg = VGG19().cuda()
-        self.apply_oa_loss = opt.apply_oa_loss
+        self.apply_oa_loss = apply_oa_loss
         self.reducer_module = None
         self.reduced_loss_module = None
         self.weights = [1.0 / 32, 1.0 / 16, 1.0 / 8, 1.0 / 4, 1.0]

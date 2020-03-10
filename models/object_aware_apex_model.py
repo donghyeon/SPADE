@@ -1,30 +1,20 @@
 import torch
-import models.networks as networks
-import util.util as util
-from models.pix2pix_model import Pix2PixModel
+from models.apex_model import ApexModel
+import models.networks.object_aware_loss as oa_loss
 
 
-class Fix2FixModel(Pix2PixModel):
-    def __init__(self, opt):
-        torch.nn.Module.__init__(self)
-        self.opt = opt
-        self.FloatTensor = torch.cuda.FloatTensor if self.use_gpu() \
-            else torch.FloatTensor
-        if opt.fp16:
-            self.FloatTensor = torch.cuda.HalfTensor
-        self.ByteTensor = torch.cuda.ByteTensor if self.use_gpu() \
-            else torch.ByteTensor
-
-        self.netG, self.netD, self.netE = self.initialize_networks(opt)
-
+# TODO: apply_oa_loss argument seems weird. Refactor this class.
+class ObjectAwareApexModel(ApexModel):
+    def set_losses(self):
         # set loss functions
+        opt = self.opt
         if opt.isTrain:
-            self.criterionGAN = networks.GANLoss(
-                opt.gan_mode, tensor=self.FloatTensor, opt=self.opt)
+            self.criterionGAN = oa_loss.GANLoss(
+                opt.gan_mode, tensor=self.FloatTensor, opt=self.opt, apply_oa_loss=True)
             if not opt.no_ganFeat_loss:
-                self.criterionFeat = networks.FeatLoss(tensor=self.FloatTensor, opt=self.opt)
+                self.criterionFeat = oa_loss.FeatLoss(tensor=self.FloatTensor, opt=self.opt, apply_oa_loss=True)
             if not opt.no_vgg_loss:
-                self.criterionVGG = networks.VGGLoss(opt=self.opt)
+                self.criterionVGG = oa_loss.VGGLoss(opt=self.opt, apply_oa_loss=True)
 
     def compute_generator_loss(self, input_semantics, real_image):
         G_losses = {}
