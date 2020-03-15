@@ -26,7 +26,7 @@ def apex_create_dataloader(opt):
 
     dataloader = torch.utils.data.DataLoader(
         instance,
-        batch_size=opt.batchSize,
+        batch_size=int(opt.batchSize / opt.world_size),
         num_workers=int(opt.nThreads),
         drop_last=opt.isTrain,
         sampler=sampler
