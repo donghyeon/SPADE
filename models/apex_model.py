@@ -33,3 +33,10 @@ class ApexModel(Pix2PixModel):
                 self.criterionVGG = networks.VGGLoss(self.opt.gpu_ids)
             if opt.use_vae:
                 self.KLDLoss = networks.KLDLoss()
+
+    def initialize_networks(self, opt):
+        netG = networks.define_G(opt)
+        netD = networks.define_D(opt) if opt.isTrain else None
+        netE = networks.define_E(opt) if opt.use_vae else None
+
+        return netG, netD, netE
