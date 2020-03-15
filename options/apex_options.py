@@ -19,10 +19,12 @@ class ApexTrainOptions(TrainOptions):
         opt = super().parse(save)
 
         opt.distributed = False
+        opt.world_size = 1
         if len(opt.gpu_ids) > 1:
-            opt.distributed = True
             torch.cuda.set_device(opt.local_rank)
             torch.distributed.init_process_group(backend="nccl", init_method="env://")
+            opt.distributed = True
+            opt.world_size = torch.distributed.get_world_size()
 
         self.opt = opt
         return opt
