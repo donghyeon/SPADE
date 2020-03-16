@@ -67,7 +67,8 @@ class ApexTrainer(Pix2PixTrainer):
     def save_checkpoint(self, filename):
         checkpoint = {'model': self.pix2pix_model.state_dict(),
                       'optimizer_G': self.optimizer_G.state_dict(),
-                      'optimizer_D': self.optimizer_D.state_dict()}
+                      'optimizer_D': self.optimizer_D.state_dict(),
+                      'amp': amp.state_dict()}
         torch.save(checkpoint, filename)
 
     def load_checkpoint(self, epoch):
@@ -76,6 +77,7 @@ class ApexTrainer(Pix2PixTrainer):
         self.pix2pix_model.load_state_dict(checkpoint['model'])
         self.optimizer_G.load_state_dict(checkpoint['optimizer_G'])
         self.optimizer_D.load_state_dict(checkpoint['optimizer_D'])
+        amp.load_state_dict(checkpoint['amp'])
 
     def get_checkpoint_filename(self, epoch):
         if epoch == 'latest':
