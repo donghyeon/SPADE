@@ -7,7 +7,10 @@ import re
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from models.networks.sync_batchnorm import SynchronizedBatchNorm2d
+# TODO: apex.parallel.SyncBatchNorm is designd to work with DistributedDataParallel
+#  Refactor normalization functions and classes to work with DataParallel also
+# from models.networks.sync_batchnorm import SynchronizedBatchNorm2d  # for DataParallel
+from apex.parallel import SyncBatchNorm as SynchronizedBatchNorm2d  # for DistributedDataParallel
 import torch.nn.utils.spectral_norm as spectral_norm
 
 
