@@ -69,9 +69,6 @@ if opt.distributed:
 else:
     dataloader = data.create_dataloader(opt)
 
-# TODO: replace vacancy's SynchronizedBatchNorm to apex.parallel.SyncBatchNorm.
-#  For now, --norm_G should not contain 'syncbatch'
-#  Thus, for SPADEGenerator, the --norm_G should be changed since its default is 'spectralspadesyncbatch3x3'.
 # create trainer for our model
 trainer = trainers.create_trainer(opt)
 
