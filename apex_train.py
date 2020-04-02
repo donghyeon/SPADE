@@ -41,6 +41,7 @@ def apex_create_dataloader(opt):
 def all_reduce_dict(dict_to_reduce):
     for key in dict_to_reduce:
         torch.distributed.all_reduce(dict_to_reduce[key])
+        dict_to_reduce[key] /= torch.distributed.get_world_size()
     return dict_to_reduce
 
 
