@@ -79,7 +79,8 @@ trainer = trainers.create_trainer(opt)
 iter_counter = IterationCounter(opt, len(dataloader))
 
 # create tool for visualization
-visualizer = Visualizer(opt)
+if opt.local_rank == 0:
+    visualizer = Visualizer(opt)
 
 for epoch in iter_counter.training_epochs():
     iter_counter.record_epoch_start(epoch)
