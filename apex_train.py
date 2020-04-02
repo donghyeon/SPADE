@@ -48,7 +48,7 @@ def all_gather_and_concatenate_dict(dict_to_gather):
     gathered_dict = OrderedDict()
     for key in dict_to_gather:
         tensor_to_gather = dict_to_gather[key]
-        gathered_tensors = [torch.ones_like(tensor_to_gather) for torch.distributed.get_world_size()]
+        gathered_tensors = [torch.ones_like(tensor_to_gather) for _ in torch.distributed.get_world_size()]
         torch.distributed.all_gather(gathered_tensors, tensor_to_gather)
         gathered_tensors = torch.cat(gathered_tensors)
         gathered_dict[key] = gathered_tensors
