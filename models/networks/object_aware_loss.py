@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from models.networks.architecture import VGG19
+from torchvision.transforms import Normalize
 
 
 class MultiScaleDiscriminatorLossWrapper(nn.Module):
@@ -233,6 +234,7 @@ class VGGLoss(nn.Module):
         self.reducer_module = None
         self.reduced_loss_module = None
         self.weights = [1.0 / 32, 1.0 / 16, 1.0 / 8, 1.0 / 4, 1.0]
+        self.normalize_fn = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         self.build()
 
     def build(self):
@@ -243,6 +245,8 @@ class VGGLoss(nn.Module):
         self.reduced_loss_module = ReducedL1Loss(self.reducer_module)
 
     def forward(self, x, y, input_semantics):
+        x = self.normalize_fn(x)
+        y = self.normalize_fn(y)
         x_vgg, y_vgg = self.vgg(x), self.vgg(y)
         loss = 0
         for i in range(len(x_vgg)):
