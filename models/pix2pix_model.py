@@ -6,6 +6,7 @@ Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses
 import torch
 import models.networks as networks
 import util.util as util
+from distutils.version import StrictVersion
 
 
 class Pix2PixModel(torch.nn.Module):
@@ -235,7 +236,9 @@ class Pix2PixModel(torch.nn.Module):
         return fake, real
 
     def get_edges(self, t):
-        edge = self.ByteTensor(t.size()).zero_().type(torch.bool)
+        edge = self.ByteTensor(t.size()).zero_()
+        if StrictVersion(torch.__version__) > StrictVersion('1.1'):
+            edge = edge.bool()
         edge[:, :, :, 1:] = edge[:, :, :, 1:] | (t[:, :, :, 1:] != t[:, :, :, :-1])
         edge[:, :, :, :-1] = edge[:, :, :, :-1] | (t[:, :, :, 1:] != t[:, :, :, :-1])
         edge[:, :, 1:, :] = edge[:, :, 1:, :] | (t[:, :, 1:, :] != t[:, :, :-1, :])
