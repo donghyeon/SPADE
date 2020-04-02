@@ -1,6 +1,7 @@
 import models
 from trainers.pix2pix_trainer import Pix2PixTrainer
 import torch
+import os
 from apex import amp
 from apex.parallel import DistributedDataParallel
 
@@ -69,7 +70,8 @@ class ApexTrainer(Pix2PixTrainer):
                       'optimizer_G': self.optimizer_G.state_dict(),
                       'optimizer_D': self.optimizer_D.state_dict(),
                       'amp': amp.state_dict()}
-        torch.save(checkpoint, filename)
+        save_path = os.path.join(self.opt.checkpoints_dir, self.opt.name, filename)
+        torch.save(checkpoint, save_path)
 
     def load_checkpoint(self, epoch):
         filename = self.get_checkpoint_filename(epoch)
