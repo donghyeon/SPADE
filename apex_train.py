@@ -11,10 +11,11 @@ import data
 import trainers
 from util.iter_counter import IterationCounter
 from util.visualizer import Visualizer
-
+from distutils.version import StrictVersion
 
 # TODO: opt.continue_train can affect how to shuffle dataset.
 #  DataLoader may need a synchronized random seed at the start of training.
+#  In addition, DistributedSampler in torch 1.1 does not support shuffle argument.
 def apex_create_dataloader(opt):
     dataset = data.find_dataset_using_name(opt.dataset_mode)
     instance = dataset()
@@ -22,7 +23,10 @@ def apex_create_dataloader(opt):
     print("dataset [%s] of size %d was created" %
           (type(instance).__name__, len(instance)))
 
-    sampler = torch.utils.data.distributed.DistributedSampler(instance, shuffle=not opt.serial_batches)
+    if StrictVersion(torch.__version__) > StrictVersion('1.1'):
+        sampler = torch.utils.data.distributed.DistributedSampler(instance, shuffle=not opt.serial_batches)
+    else:
+        sampler = torch.utils.data.distributed.DistributedSampler(instance)
 
     dataloader = torch.utils.data.DataLoader(
         instance,
