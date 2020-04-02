@@ -253,11 +253,13 @@ class VGGLoss(nn.Module):
 
     def normalize(self, x):
         # Transform the range of x: -1.0 to 1.0 --> 0.0 to 1.0
-        x = (x + 1 / 2)
+        x = (x + 1) / 2
 
         # Normalize x by imagenet statistics
         mean = torch.tensor([0.485, 0.456, 0.406], device=x.device)
         std = torch.tensor([0.229, 0.224, 0.225], device=x.device)
+        mean = mean[:, None, None]
+        std = std[:, None, None]
         x = (x - mean) / std
         return x
 
