@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from models.networks.architecture import VGG19
-from torchvision.transforms import Normalize
 
 
 class MultiScaleDiscriminatorLossWrapper(nn.Module):
@@ -234,7 +233,6 @@ class VGGLoss(nn.Module):
         self.reducer_module = None
         self.reduced_loss_module = None
         self.weights = [1.0 / 32, 1.0 / 16, 1.0 / 8, 1.0 / 4, 1.0]
-        self.normalize_fn = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         self.build()
 
     def build(self):
@@ -245,13 +243,23 @@ class VGGLoss(nn.Module):
         self.reduced_loss_module = ReducedL1Loss(self.reducer_module)
 
     def forward(self, x, y, input_semantics):
-        x = self.normalize_fn(x)
-        y = self.normalize_fn(y)
+        x = self.normalize(x)
+        y = self.normalize(y)
         x_vgg, y_vgg = self.vgg(x), self.vgg(y)
         loss = 0
         for i in range(len(x_vgg)):
             loss += self.weights[i] * self.reduced_loss_module(x_vgg[i], y_vgg[i].detach(), input_semantics)
         return loss
+
+    def normalize(self, x):
+        # Transform the range of x: -1.0 to 1.0 --> 0.0 to 1.0
+        x = (x + 1 / 2)
+
+        # Normalize x by imagenet statistics
+        mean = torch.tensor([0.485, 0.456, 0.406], device=x.device)
+        std = torch.tensor([0.229, 0.224, 0.225], device=x.device)
+        x = (x - mean) / std
+        return x
 
 
 coco_non_object_labels = {0, 94, 97, 101, 102, 103, 106, 111, 113, 114,
