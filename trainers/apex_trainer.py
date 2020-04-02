@@ -60,9 +60,7 @@ class ApexTrainer(Pix2PixTrainer):
     # this will not call util.save_network()
     def save(self, epoch):
         filename = self.get_checkpoint_filename(epoch)
-        # Only one process will save the model to disk
-        if self.opt.local_rank == 0:
-            self.save_checkpoint(filename)
+        self.save_checkpoint(filename)
 
     # For now, there's no need to save netG, netD and netE separately
     def save_checkpoint(self, filename):

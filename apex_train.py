@@ -42,7 +42,8 @@ def apex_create_dataloader(opt):
 opt = ApexTrainOptions().parse()
 
 # print options to help debugging
-print(' '.join(sys.argv))
+if opt.local_rank == 0:
+    print(' '.join(sys.argv))
 
 # load the dataset
 if opt.distributed:
@@ -76,21 +77,23 @@ for epoch in iter_counter.training_epochs():
         trainer.run_discriminator_one_step(data_i)
 
         # Visualizations
-        if opt.local_rank == 0:
-            if iter_counter.needs_printing():
-                losses = trainer.get_latest_losses()
+        if iter_counter.needs_printing():
+            losses = trainer.get_latest_losses()
+            if opt.local_rank == 0:
                 visualizer.print_current_errors(epoch, iter_counter.epoch_iter,
                                                 losses, iter_counter.time_per_iter)
                 visualizer.plot_current_errors(losses, iter_counter.total_steps_so_far)
 
-            if iter_counter.needs_displaying():
-                visuals = OrderedDict([('input_label', data_i['label']),
-                                       ('synthesized_image', trainer.get_latest_generated()),
-                                       ('real_image', data_i['image'])])
+        if iter_counter.needs_displaying():
+            visuals = OrderedDict([('input_label', data_i['label']),
+                                   ('synthesized_image', trainer.get_latest_generated()),
+                                   ('real_image', data_i['image'])])
+            if opt.local_rank == 0:
                 visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far,
                                                    iter_counter.epoch_iter)
 
-            if iter_counter.needs_saving():
+        if iter_counter.needs_saving():
+            if opt.local_rank == 0:
                 print('saving the latest model (epoch %d, total_steps %d)' %
                       (epoch, iter_counter.total_steps_so_far))
                 trainer.save('latest')
@@ -101,9 +104,11 @@ for epoch in iter_counter.training_epochs():
 
     if epoch % opt.save_epoch_freq == 0 or \
        epoch == iter_counter.total_epochs:
-        print('saving the model at the end of epoch %d, iters %d' %
-              (epoch, iter_counter.total_steps_so_far))
-        trainer.save('latest')
-        trainer.save(epoch)
+        if opt.local_rank == 0:
+            print('saving the model at the end of epoch %d, iters %d' %
+                  (epoch, iter_counter.total_steps_so_far))
+            trainer.save('latest')
+            trainer.save(epoch)
 
-print('Training was successfully finished.')
+if opt.local_rank == 0:
+    print('Training was successfully finished.')
