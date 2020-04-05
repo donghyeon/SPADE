@@ -73,7 +73,8 @@ class ApexTrainer(Pix2PixTrainer):
 
     def load_checkpoint(self, epoch):
         filename = self.get_checkpoint_filename(epoch)
-        checkpoint = torch.load(filename, map_location=torch.device('cuda', torch.cuda.current_device()))
+        load_path = os.path.join(self.opt.checkpoints_dir, self.opt.name, filename)
+        checkpoint = torch.load(load_path, map_location=torch.device('cuda', torch.cuda.current_device()))
         self.pix2pix_model.load_state_dict(checkpoint['model'])
         self.optimizer_G.load_state_dict(checkpoint['optimizer_G'])
         self.optimizer_D.load_state_dict(checkpoint['optimizer_D'])
