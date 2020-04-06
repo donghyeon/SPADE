@@ -11,7 +11,7 @@ import data
 import trainers
 from util.iter_counter import IterationCounter
 from util.visualizer import Visualizer
-from util.async_visualizer import AsyncVisualizer
+from util.async_visualizer import AsyncVisualizer, ApexVisualizer
 from distutils.version import StrictVersion
 
 # TODO: opt.continue_train can affect how to shuffle dataset.
@@ -60,7 +60,10 @@ iter_counter = IterationCounter(opt, len(dataloader))
 
 # create tool for visualization
 if opt.distributed:
-    visualizer = AsyncVisualizer(opt)
+    if opt.no_all_gather_outputs:
+        visualizer = ApexVisualizer(opt)
+    else:
+        visualizer = AsyncVisualizer(opt)
 else:
     visualizer = Visualizer(opt)
 
@@ -110,7 +113,7 @@ for epoch in iter_counter.training_epochs():
             trainer.save(epoch)
 
 # Last
-if opt.distributed:
+if opt.distributed and not opt.no_all_gather_outputs:
     visualizer.make_last_visualizations()
 
 if opt.local_rank == 0:

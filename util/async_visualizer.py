@@ -3,6 +3,20 @@ from collections import OrderedDict
 import torch
 
 
+class ApexVisualizer(Visualizer):
+    def print_current_errors(self, epoch, i, errors, t):
+        if self.opt.local_rank == 0:
+            super().print_current_errors(epoch, i, errors, t)
+
+    def plot_current_errors(self, errors, step):
+        if self.opt.local_rank == 0:
+            super().plot_current_errors(errors, step)
+
+    def display_current_results(self, visuals, epoch, step, iter):
+        if self.opt.local_rank == 0:
+            super().display_current_results(visuals, epoch, step, iter)
+
+
 def all_reduce_dict(dict_to_reduce):
     for key in dict_to_reduce:
         torch.distributed.all_reduce(dict_to_reduce[key], async_op=True)
@@ -19,7 +33,7 @@ def all_gather_dict(dict_to_gather):
     return gathered_dict
 
 
-class AsyncVisualizer(Visualizer):
+class AsyncVisualizer(ApexVisualizer):
     def __init__(self, opt):
         super().__init__(opt)
         self.current_epoch = None
@@ -39,8 +53,7 @@ class AsyncVisualizer(Visualizer):
             torch.distributed.barrier()
 
         old_epoch, old_i, old_errors, old_t = self.get_print_fn_args()
-        if self.opt.local_rank == 0:
-            super().print_current_errors(old_epoch, old_i, old_errors, old_t)
+        super().print_current_errors(old_epoch, old_i, old_errors, old_t)
         self.store_print_fn_args(epoch, i, errors, t)
 
     def plot_current_errors(self, errors, step):
@@ -49,8 +62,7 @@ class AsyncVisualizer(Visualizer):
             return
 
         old_errors, old_step = self.get_plot_fn_args()
-        if self.opt.local_rank == 0:
-            super().plot_current_errors(old_errors, old_step)
+        super().plot_current_errors(old_errors, old_step)
         self.store_plot_fn_args(errors, step)
 
     def display_current_results(self, visuals, epoch, step, iter):
@@ -62,8 +74,7 @@ class AsyncVisualizer(Visualizer):
             torch.distributed.barrier()
 
         old_visuals, old_epoch, old_step, old_iter = self.get_display_fn_args()
-        if self.opt.local_rank == 0:
-            super().display_current_results(old_visuals, old_epoch, old_step, old_iter)
+        super().display_current_results(old_visuals, old_epoch, old_step, old_iter)
         self.store_display_fn_args(visuals, epoch, step, iter)
 
     def get_print_fn_args(self):
