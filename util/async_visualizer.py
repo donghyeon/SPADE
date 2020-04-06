@@ -4,23 +4,19 @@ import torch
 
 
 def all_reduce_dict(dict_to_reduce):
-    async_handles = OrderedDict()
     for key in dict_to_reduce:
-        op = torch.distributed.all_reduce(dict_to_reduce[key], async_op=True)
-        async_handles[key] = op
-    return dict_to_reduce, async_handles
+        torch.distributed.all_reduce(dict_to_reduce[key], async_op=True)
+    return dict_to_reduce
 
 
-def all_gather_dict(dict_to_gather):
+def all_gather_dict(dict_to_gather, async_ops):
     gathered_dict = OrderedDict()
-    async_handles = OrderedDict()
     for key in dict_to_gather:
         tensor_to_gather = dict_to_gather[key]
         gathered_tensors = [torch.ones_like(tensor_to_gather) for _ in range(torch.distributed.get_world_size())]
-        op = torch.distributed.all_gather(gathered_tensors, tensor_to_gather, async_op=True)
+        torch.distributed.all_gather(gathered_tensors, tensor_to_gather, async_op=True)
         gathered_dict[key] = gathered_tensors
-        async_handles[key] = op
-    return gathered_dict, async_handles
+    return gathered_dict
 
 
 class AsyncVisualizer(Visualizer):
@@ -40,7 +36,7 @@ class AsyncVisualizer(Visualizer):
             return
 
         if self.need_synchronize(epoch, i):
-            self.synchronize()
+            torch.distributed.barrier()
 
         old_epoch, old_i, old_errors, old_t = self.get_print_fn_args()
         super().print_current_errors(old_epoch, old_i, old_errors, old_t)
@@ -61,7 +57,7 @@ class AsyncVisualizer(Visualizer):
             return
 
         if self.need_synchronize(epoch, iter):
-            self.synchronize()
+            torch.distributed.barrier()
 
         old_visuals, old_epoch, old_step, old_iter = self.get_display_fn_args()
         super().display_current_results(old_visuals, old_epoch, old_step, old_iter)
@@ -97,6 +93,7 @@ class AsyncVisualizer(Visualizer):
         self.plot_current_errors_fn_args = (errors, step)
 
     def store_display_fn_args(self, visuals, epoch, step, iter):
+        visuals = all_gather_dict(visuals)
         self.display_current_results_fn_args = (visuals, epoch, step, iter)
 
     def need_synchronize(self, epoch, epoch_iter):
@@ -106,10 +103,6 @@ class AsyncVisualizer(Visualizer):
             self.current_epoch = epoch
             self.current_epoch_iter = epoch_iter
             return True
-
-    def synchronize(self):
-        for key in self.async_ops:
-            self.async_ops[key].wait()
 
     def make_last_visualizations(self):
         self.print_current_errors(self.current_epoch + 1, self.current_epoch_iter + 1, None, None)
