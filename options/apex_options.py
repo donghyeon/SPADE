@@ -12,6 +12,8 @@ class ApexTrainOptions(TrainOptions):
         parser.add_argument('--trainer', type=str, default='apex', help='apex|pix2pix')
         parser.add_argument('--fp16', action='store_true', help='mixed precision training')
         parser.add_argument('--local_rank', default=0, type=int, help='for DistributedDataParallel module')
+        parser.add_argument('--all_gather_visualizations', default='store_true',
+                            help='whether to store all visualizations when using multiple GPUs')
 
         return parser
 
