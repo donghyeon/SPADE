@@ -11,6 +11,7 @@ import data
 import trainers
 from util.iter_counter import IterationCounter
 from util.visualizer import Visualizer
+from util.async_visualizer import AsyncVisualizer
 from distutils.version import StrictVersion
 
 # TODO: opt.continue_train can affect how to shuffle dataset.
@@ -38,24 +39,6 @@ def apex_create_dataloader(opt):
     return dataloader
 
 
-def all_reduce_dict(dict_to_reduce):
-    for key in dict_to_reduce:
-        torch.distributed.all_reduce(dict_to_reduce[key])
-        dict_to_reduce[key] /= torch.distributed.get_world_size()
-    return dict_to_reduce
-
-
-def all_gather_and_concatenate_dict(dict_to_gather):
-    gathered_dict = OrderedDict()
-    for key in dict_to_gather:
-        tensor_to_gather = dict_to_gather[key]
-        gathered_tensors = [torch.ones_like(tensor_to_gather) for _ in range(torch.distributed.get_world_size())]
-        torch.distributed.all_gather(gathered_tensors, tensor_to_gather)
-        gathered_tensors = torch.cat(gathered_tensors)
-        gathered_dict[key] = gathered_tensors
-    return gathered_dict
-
-
 # parse options
 opt = ApexTrainOptions().parse()
 
@@ -76,7 +59,9 @@ trainer = trainers.create_trainer(opt)
 iter_counter = IterationCounter(opt, len(dataloader))
 
 # create tool for visualization
-if opt.local_rank == 0:
+if opt.distributed:
+    visualizer = AsyncVisualizer(opt)
+else:
     visualizer = Visualizer(opt)
 
 for epoch in iter_counter.training_epochs():
@@ -95,22 +80,16 @@ for epoch in iter_counter.training_epochs():
         # Visualizations
         if iter_counter.needs_printing():
             losses = trainer.get_latest_losses()
-            if opt.distributed and not opt.no_all_gather_outputs:
-                losses = all_reduce_dict(losses)
-            if opt.local_rank == 0:
-                visualizer.print_current_errors(epoch, iter_counter.epoch_iter,
-                                                losses, iter_counter.time_per_iter)
-                visualizer.plot_current_errors(losses, iter_counter.total_steps_so_far)
+            visualizer.print_current_errors(epoch, iter_counter.epoch_iter,
+                                            losses, iter_counter.time_per_iter)
+            visualizer.plot_current_errors(losses, iter_counter.total_steps_so_far)
 
         if iter_counter.needs_displaying():
             visuals = OrderedDict([('input_label', data_i['label']),
                                    ('synthesized_image', trainer.get_latest_generated()),
                                    ('real_image', data_i['image'])])
-            if opt.distributed and not opt.no_all_gather_outputs:
-                visuals = all_gather_and_concatenate_dict(visuals)
-            if opt.local_rank == 0:
-                visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far,
-                                                   iter_counter.epoch_iter)
+            visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far,
+                                               iter_counter.epoch_iter)
 
         if iter_counter.needs_saving():
             if opt.local_rank == 0:
@@ -129,6 +108,10 @@ for epoch in iter_counter.training_epochs():
                   (epoch, iter_counter.total_steps_so_far))
             trainer.save('latest')
             trainer.save(epoch)
+
+# Last
+if opt.distributed:
+    visualizer.make_last_visualizations()
 
 if opt.local_rank == 0:
     print('Training was successfully finished.')
