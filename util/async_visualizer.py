@@ -9,7 +9,7 @@ def all_reduce_dict(dict_to_reduce):
     return dict_to_reduce
 
 
-def all_gather_dict(dict_to_gather, async_ops):
+def all_gather_dict(dict_to_gather):
     gathered_dict = OrderedDict()
     for key in dict_to_gather:
         tensor_to_gather = dict_to_gather[key]
