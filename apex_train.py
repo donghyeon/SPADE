@@ -95,7 +95,7 @@ for epoch in iter_counter.training_epochs():
         # Visualizations
         if iter_counter.needs_printing():
             losses = trainer.get_latest_losses()
-            if opt.distributed and opt.all_gather_visualizations:
+            if opt.distributed and opt.no_all_gather_outputs:
                 losses = all_reduce_dict(losses)
             if opt.local_rank == 0:
                 visualizer.print_current_errors(epoch, iter_counter.epoch_iter,
@@ -106,7 +106,7 @@ for epoch in iter_counter.training_epochs():
             visuals = OrderedDict([('input_label', data_i['label']),
                                    ('synthesized_image', trainer.get_latest_generated()),
                                    ('real_image', data_i['image'])])
-            if opt.distributed and opt.all_gather_visualizations:
+            if opt.distributed and opt.no_all_gather_outputs:
                 visuals = all_gather_and_concatenate_dict(visuals)
             if opt.local_rank == 0:
                 visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far,
