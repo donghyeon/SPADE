@@ -31,12 +31,12 @@ class AsyncVisualizer(Visualizer):
         self.display_current_results_fn_args = None
 
     def print_current_errors(self, epoch, i, errors, t):
+        if self.need_synchronize(epoch, i):
+            torch.distributed.barrier()
+
         if not self.current_epoch:
             self.store_print_fn_args(epoch, i, errors, t)
             return
-
-        if self.need_synchronize(epoch, i):
-            torch.distributed.barrier()
 
         old_epoch, old_i, old_errors, old_t = self.get_print_fn_args()
         super().print_current_errors(old_epoch, old_i, old_errors, old_t)
@@ -52,12 +52,12 @@ class AsyncVisualizer(Visualizer):
         self.store_plot_fn_args(errors, step)
 
     def display_current_results(self, visuals, epoch, step, iter):
+        if self.need_synchronize(epoch, iter):
+            torch.distributed.barrier()
+        
         if not self.current_epoch:
             self.store_display_fn_args(visuals, epoch, step, iter)
             return
-
-        if self.need_synchronize(epoch, iter):
-            torch.distributed.barrier()
 
         old_visuals, old_epoch, old_step, old_iter = self.get_display_fn_args()
         super().display_current_results(old_visuals, old_epoch, old_step, old_iter)
